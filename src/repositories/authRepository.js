@@ -15,7 +15,6 @@ async function GetSignUpByPhoneNumber(phoneNumber){
     return await models.SignUp.findOne({ PhoneNumber: phoneNumber });
 }
 
-
 async function CreateOTP(otpDetails){
     try {
         await models.Otp.create(otpDetails);
@@ -25,8 +24,14 @@ async function CreateOTP(otpDetails){
     }
 }
 
+async function GetOtpByPhoneNumber(phoneNumber){
+    return await models.Otp.findOne({ PhoneNumber: phoneNumber });
+}
+
+
 module.exports = {
     CreateSignUp,
     GetSignUpByPhoneNumber,
     CreateOTP,
+    GetOtpByPhoneNumber
 };

@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const middleware = require('../middleware');
+
 
 function tmp(req,res){};
 
 router.post('/signup', authController.SignUp);
-router.post('/create-pin', tmp);
+router.post('/validate-otp', middleware.ValidateAccessToken, authController.ValidateOtp);
+router.post('/create-pin', middleware.ValidateAccessToken, authController.CreatePin);
 router.post('/login', tmp);
-router.post('/refrsh-token', tmp);
 
 module.exports = router;

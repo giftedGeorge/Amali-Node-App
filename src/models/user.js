@@ -8,8 +8,10 @@ const userSchema = new Schema({
     PhoneNumber: {type: String, length: 14, unique: true, required: [true, 'a phone number must be provided!'], trim: true},
     Email: {type: String, unique: true, trim: true},
     Bvn: {type: Number, length: [11, 'BVN must be 11 numbers!'], unique: true, trim: true},
-    UserType: {type: Number, required: [true, 'type of user must be provided']},
+    UserType: {type: Number},
     IsInterestAllowed: {type: Boolean, default: true},
+    CreatedAt: {type: Date, default: Date.now},
+    ModifiedAt: {type: Date, default: Date.now}
 });
 
 const User = model('Users', userSchema);
