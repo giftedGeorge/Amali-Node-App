@@ -1,0 +1,35 @@
+{
+  "name": "amali-node-app",
+  "version": "1.0.0",
+  "description": "Backend Section for Amali app",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm-run-all -p start-server start-pretty",
+    "start-server": "nodemon index.js",
+    "start-pretty": "pino-pretty --translateTime --colorize",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/giftedGeorge/Amali-Node-App.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/giftedGeorge/Amali-Node-App/issues"
+  },
+  "homepage": "https://github.com/giftedGeorge/Amali-Node-App#readme",
+  "dependencies": {
+    "africastalking": "^0.6.2",
+    "argon2": "^0.31.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^7.5.0",
+    "pino": "^8.15.0",
+    "pino-pretty": "^10.2.0"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  }
+}
