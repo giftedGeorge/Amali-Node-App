@@ -1,6 +1,6 @@
-const userType = {
+const UserType = {
     individual: 1,
     agent: 2
   };
 
-module.exports = userType;
+module.exports = UserType;

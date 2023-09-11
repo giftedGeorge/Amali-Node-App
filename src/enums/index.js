@@ -1,3 +1,3 @@
-const userType = require('./userType');
+const UserType = require('./userType');
 
-module.exports = {userType};
+module.exports = {UserType};

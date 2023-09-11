@@ -28,10 +28,14 @@ async function GetOtpByPhoneNumber(phoneNumber){
     return await models.Otp.findOne({ PhoneNumber: phoneNumber });
 }
 
+async function GetUserLoginByPhoneNumber(phoneNumber){
+    return await models.UserLogin.findOne({ PhoneNumber: phoneNumber });
+}
 
 module.exports = {
     CreateSignUp,
     GetSignUpByPhoneNumber,
     CreateOTP,
-    GetOtpByPhoneNumber
+    GetOtpByPhoneNumber,
+    GetUserLoginByPhoneNumber
 };

@@ -6,7 +6,7 @@ function ValidateAccessToken(req, res, next) {
     const token = authHeader && authHeader.split(' ')[1];
   
     if (!token) {
-        throw new Error('Error! Token is missing from the request!');
+        res.status(400).send('Error! Token is missing from the request!');
     }
   
     try {
@@ -15,7 +15,7 @@ function ValidateAccessToken(req, res, next) {
         next();
     } catch (error) {
         logger.error(error);
-        throw new Error('Error! Invalid access token!');
+        res.status(401).send('Error! Invalid access token!');
     }
   };
 

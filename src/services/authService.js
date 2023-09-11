@@ -1,10 +1,10 @@
 const argon2 = require('argon2');
-const jwt = require('jsonwebtoken');
 const models = require('../models');
 const logger = require('../logger');
 const {authRepository, userRepository} = require('../repositories')
 const {otpUtil, jwtUtil} = require('../utils');
 const { Error } = require('mongoose');
+const customErrors = require('../errors');
 const tokenType = "Bearer";
   
 
@@ -29,14 +29,16 @@ async function SignUp (req){
         const phoneNumString = String(req.body.phoneNumber);
         const sendOtpResult = await otpUtil.SendOTP(phoneNumString, otp);
         if(sendOtpResult !== true){
-            throw new Error('Failed to send OTP');
+            logger.error('Failed to send OTP');
+            return false;
         }
         logger.info(`OTP was successfully sent to ${req.body.phoneNumber}`);
 
         const createdSignUp = await authRepository.GetSignUpByPhoneNumber(req.body.phoneNumber);
         
         if(!createdSignUp){
-            throw new Error(`no SignUp was found with phone number: ${req.body.phoneNumber}`)
+            logger.error(`no SignUp was found with phone number: ${req.body.phoneNumber}`);
+            return false
         }
         logger.info(`found one SignUp with phone number: ${createdSignUp.PhoneNumber}`);
 
@@ -56,6 +58,7 @@ async function SignUp (req){
             expiresIn: parseInt(process.env.TEMP_ACCESS_TOKEN_EXPIRATION_TIME) * 60
         };
     } catch (error) {
+        logger.error('An error occurred during the sign up process:', err);
         throw error;
     }
 };
@@ -68,39 +71,43 @@ async function ValidateOtp(req){
         // Verify that the phone number in the JWT matches the request's phone number
         const decodedToken = jwtUtil.DecodeAccessToken(req);
         if (phoneNumber !== decodedToken.phoneNumber) {
-          throw new Error('Phone number mismatch. Token is invalid!');
+          logger.error('Phone number mismatch. Token is invalid!');
+          return false;
         }
     
         // Find the signup document
         const userSignUp = await authRepository.GetSignUpByPhoneNumber(phoneNumber);
     
         if (!userSignUp) {
-            throw new Error('User not found');
+            logger.error('SignUp not found');
+            return false;
         }
     
         // Check if isPhoneNumberVerified is false
         if (userSignUp.isPhoneNumberVerified) {
-            throw new Error('Phone number already verified');
+            logger.error('Phone number already verified');
+            return false;
         }
     
         // Find the OTP document matching the phone number
         const otpDoc = await authRepository.GetOtpByPhoneNumber(phoneNumber);
     
         if (!otpDoc) {
-            throw new Error('OTP not found');
+            logger.error('OTP not found');
+            return false;
         }
     
         // Check if the hashed OTP code from the request matches the stored hash
         const isOtpMatch = await argon2.verify(otpDoc.Code, otpCode);
     
         if (!isOtpMatch) {
-            throw new Error('Error! OTP code mismatch!');
+            throw new customErrors.OtpValidationError('Error! OTP code mismatch!');
         }
     
         // Check if the OTP code has expired
         const expirationTime = otpDoc.SentAt.getTime() + parseInt(process.env.OTP_EXPIRATION_TIME) * 60000;
         if (expirationTime < Date.now()) {
-            throw new Error('OTP code expired');
+            throw new customErrors.OtpValidationError('OTP code expired');
         }
     
         // Update isPhoneNumberVerified to true in the user document
@@ -110,13 +117,13 @@ async function ValidateOtp(req){
         // Return success response
         logger.info('Phone number verified successfully');
         return true
-      } catch (error) {
-        logger.error('Error validating OTP:', error);
-        throw error;
+      } catch (err) {
+        logger.error('Error validating OTP:', err);
+        throw err;
       }
     };
 
-async function CreatePin(req, res){
+async function CreatePin(req){
     try {
         const phoneNumber = req.body.phoneNumber;
         const pin = req.body.pin;
@@ -124,19 +131,22 @@ async function CreatePin(req, res){
         // Verify that the phone number in the JWT matches the request's phone number
         const decodedToken = jwtUtil.DecodeAccessToken(req);
         if (phoneNumber !== decodedToken.phoneNumber) {
-            throw new Error('Phone number mismatch. Token is invalid!');
+            logger.error('Phone number mismatch. Token is invalid!');
+            return false;
         }
     
         // Find the signup document
         const userSignUp = await authRepository.GetSignUpByPhoneNumber(phoneNumber);
     
         if (!userSignUp) {
-            throw new Error('User not found');
+            logger.error('SignUp not found');
+            return false;
         }
     
         // Check if isPhoneNumberVerified is true
         if (userSignUp.IsPhoneNumberVerified != true) {
-            throw new Error('Phone number already verified');
+            logger.error('Phone number already verified');
+            return false
         }
     
         // Create User
@@ -148,12 +158,14 @@ async function CreatePin(req, res){
         const createdUser = await userRepository.GetUserByPhoneNumber(phoneNumber);
     
         if (!createdUser) {
-            throw new Error('User not found');
+            logger.error('User not found');
+            return false;
         }
     
         // create UserLogin doc
         const newUserLoginDoc = models.UserLogin({
             UserId: createdUser._id,
+            PhoneNumber: phoneNumber,
             Pin: await argon2.hash(pin)
         });
     
@@ -161,8 +173,8 @@ async function CreatePin(req, res){
     
         return true
     } catch (err) {
-        logger.error('Error creating pin:', error);
-        throw error;
+        logger.error('Error creating pin:', err);
+        throw err;
     }
 }
 

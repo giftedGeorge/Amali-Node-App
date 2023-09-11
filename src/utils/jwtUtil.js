@@ -12,12 +12,12 @@ function GenerateAccessToken(payload, expiresIn){
     return jwt.sign(payload, secretKey, options);
 }
 
-function GenerateRefreshToken(userId, refreshTokenId){
+function GenerateRefreshToken(userId, refreshTokenDocId){
     const expirationTimeInMinutes = process.env.REFRESH_TOKEN_EXPIRATION_TIME;
 
     return jwt.sign({
         userId: userId,
-        tokenId: refreshTokenId
+        tokenId: refreshTokenDocId
     }, process.env.REFRESH_TOKEN_SECRET_KEY, {expiresIn: `${expirationTimeInMinutes}d`});
 }
 
