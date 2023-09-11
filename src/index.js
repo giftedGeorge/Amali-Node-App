@@ -9,6 +9,7 @@ const port = process.env.PORT || 5000;
 
 async function StartServer (){
     await ConnectToDb();
+    logger.info('Connected to database');
 
     app.use(express.json());
 
