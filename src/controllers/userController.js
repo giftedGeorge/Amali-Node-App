@@ -9,7 +9,7 @@ async function CreateUser(req, res) {
         if(!result || result === false){
             return res.status(400).json({error:'An error ocurred while creating user. Please try again'});
         }
-        return res.status(201);
+        return res.status(201).send();
         } catch (error) {
         logger.error(error);
         return res.status(500).json({error:'Unable to complete sign up at the moment. Please try again later'});
