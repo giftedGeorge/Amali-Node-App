@@ -46,7 +46,7 @@ async function SignUp (req){
             }
             logger.info(`found one SignUp with phone number: ${createdSignUp.PhoneNumber}`);
 
-            const existingOtp = authRepository.GetOtpByPhoneNumber(phoneNumString);
+            const existingOtp = await authRepository.GetOtpByPhoneNumber(phoneNumString);
             if (!existingOtp) {
                 logger.error('OTP not found');
                 return false;
@@ -54,6 +54,7 @@ async function SignUp (req){
 
             existingOtp.Code = otp;
             await existingOtp.save();
+            logger.info(`OTP for signUp with phone number: ${createdSignUp.PhoneNumber} was updated successfully`);
 
             const payload = { userId: createdSignUp._id, phoneNumber: createdSignUp.PhoneNumber };
             const tempAccessToken = jwtUtil.GenerateAccessToken(payload, process.env.TEMP_ACCESS_TOKEN_EXPIRATION_TIME);
