@@ -10,40 +10,81 @@ const tokenType = "Bearer";
 
 async function SignUp (req){
     try {
+        const phoneNumString = String(req.body.phoneNumber);
+
         const signUpDoc = models.SignUp({
             PhoneNumber: req.body.phoneNumber,
             UserType: req.body.userType,
             IsInterestAllowed: req.body.isInterestAllowed
         });
-        const existingUser = await userRepository.GetUserByPhoneNumber(req.body.phoneNumber);
-
-        if(existingUser && existingUser.IsPhoneNumberVerified === true){
-            throw new Error('User has already been verified');
-        }
 
         const otp = otpUtil.GenerateOTP();
 
-        await authRepository.CreateSignUp(signUpDoc);
-        logger.info(`new signUp with phone number ${req.body.phoneNumber} was successfully created in Users collection`);
+        const existingUser = await userRepository.GetUserByPhoneNumber(phoneNumString);
+        if(existingUser){
+            throw new Error('User has already been verified');
+        }
+
+        const existingSignUp = await authRepository.GetSignUpByPhoneNumber(phoneNumString);
+        if(existingSignUp && existingSignUp.IsPhoneNumberVerified === true){
+            throw new Error('User has already been verified');
+        }
+
+        if(existingSignUp && existingSignUp.IsPhoneNumberVerified === false){
+            const sendOtpResult = await otpUtil.SendOTP(phoneNumString, otp);
+            if(sendOtpResult !== true){
+                logger.error(`Failed to send OTP to ${phoneNumString}`);
+                return false;
+            }
+            logger.info(`OTP was successfully sent to ${phoneNumString}`);
+
+            const createdSignUp = await authRepository.GetSignUpByPhoneNumber(phoneNumString);
+            
+            if(!createdSignUp){
+                logger.error(`no SignUp was found with phone number: ${phoneNumString}`);
+                return false
+            }
+            logger.info(`found one SignUp with phone number: ${createdSignUp.PhoneNumber}`);
+
+            const existingOtp = authRepository.GetOtpByPhoneNumber(phoneNumString);
+            if (!existingOtp) {
+                logger.error('OTP not found');
+                return false;
+            }
+
+            existingOtp.Code = otp;
+            await existingOtp.save();
+
+            const payload = { userId: createdSignUp._id, phoneNumber: createdSignUp.PhoneNumber };
+            const tempAccessToken = jwtUtil.GenerateAccessToken(payload, process.env.TEMP_ACCESS_TOKEN_EXPIRATION_TIME);
+
+            return {
+                token: tempAccessToken, 
+                tokenType: tokenType, 
+                expiresIn: parseInt(process.env.TEMP_ACCESS_TOKEN_EXPIRATION_TIME) * 60
+            }; 
+        }
         
-        const phoneNumString = String(req.body.phoneNumber);
+        await authRepository.CreateSignUp(signUpDoc);
+        logger.info(`new signUp with phone number ${phoneNumString} was successfully created in Users collection`);
+        
         const sendOtpResult = await otpUtil.SendOTP(phoneNumString, otp);
         if(sendOtpResult !== true){
-            logger.error('Failed to send OTP');
+            logger.error(`Failed to send OTP to ${phoneNumString}`);
             return false;
         }
-        logger.info(`OTP was successfully sent to ${req.body.phoneNumber}`);
+        logger.info(`OTP was successfully sent to ${phoneNumString}`);
 
-        const createdSignUp = await authRepository.GetSignUpByPhoneNumber(req.body.phoneNumber);
+        const createdSignUp = await authRepository.GetSignUpByPhoneNumber(phoneNumString);
         
         if(!createdSignUp){
-            logger.error(`no SignUp was found with phone number: ${req.body.phoneNumber}`);
+            logger.error(`no SignUp was found with phone number: ${phoneNumString}`);
             return false
         }
         logger.info(`found one SignUp with phone number: ${createdSignUp.PhoneNumber}`);
 
         const otpDoc = models.Otp({
-            PhoneNumber: req.body.phoneNumber,
+            PhoneNumber: phoneNumString,
             Code: await argon2.hash(otp),
         });
         await authRepository.CreateOTP(otpDoc);
