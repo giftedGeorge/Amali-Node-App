@@ -8,6 +8,7 @@ const signUpSchema = new Schema({
     IsInterestAllowed: {type: Boolean, default: true},
     IsPhoneNumberVerified: {type: Boolean, default: false},
     CreatedAt: {type: Date, default: Date.now}
+    ModifiedAt: {type: Date, default: Date.now}
 });
 
 const SignUp = model('SignUps', signUpSchema);

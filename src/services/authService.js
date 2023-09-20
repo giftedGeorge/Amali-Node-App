@@ -53,6 +53,7 @@ async function SignUp (req){
             }
 
             existingOtp.Code = await argon2.hash(otp);
+            existingOtp.ModifiedAt = Date.now();
             await existingOtp.save();
             logger.info(`OTP for signUp with phone number: ${createdSignUp.PhoneNumber} was updated successfully`);
 
@@ -147,13 +148,14 @@ async function ValidateOtp(req){
         }
     
         // Check if the OTP code has expired
-        const expirationTime = otpDoc.SentAt.getTime() + parseInt(process.env.OTP_EXPIRATION_TIME) * 60000;
+        const expirationTime = otpDoc.ModifiedAt.getTime() + parseInt(process.env.OTP_EXPIRATION_TIME) * 60000;
         if (expirationTime < Date.now()) {
             throw new customErrors.OtpValidationError('OTP code expired');
         }
     
         // Update isPhoneNumberVerified to true in the user document
         userSignUp.IsPhoneNumberVerified = true;
+        userSignUp.ModifiedAt = Date.now();
         await userSignUp.save();
     
         // Return success response
