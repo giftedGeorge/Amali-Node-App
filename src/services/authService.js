@@ -126,7 +126,7 @@ async function ValidateOtp(req){
         }
     
         // Check if isPhoneNumberVerified is false
-        if (userSignUp.isPhoneNumberVerified) {
+        if (userSignUp.IsPhoneNumberVerified) {
             logger.error('Phone number already verified');
             return false;
         }
