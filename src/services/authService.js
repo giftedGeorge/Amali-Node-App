@@ -52,7 +52,7 @@ async function SignUp (req){
                 return false;
             }
 
-            existingOtp.Code = otp;
+            existingOtp.Code = await argon2.hash(otp);
             await existingOtp.save();
             logger.info(`OTP for signUp with phone number: ${createdSignUp.PhoneNumber} was updated successfully`);
 
