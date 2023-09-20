@@ -100,7 +100,7 @@ async function SignUp (req){
             expiresIn: parseInt(process.env.TEMP_ACCESS_TOKEN_EXPIRATION_TIME) * 60
         };
     } catch (error) {
-        logger.error('An error occurred during the sign up process:', err);
+        logger.error('An error occurred during the sign up process:', error);
         throw error;
     }
 };
